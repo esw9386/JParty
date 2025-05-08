@@ -1,4 +1,7 @@
+package JParty;
+// import org.json.simple.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.ServerSocket;
@@ -17,30 +20,55 @@ import javax.swing.*;
  * @author isabe
  */
 public class host {
-    static ArrayList<PrintStream> contestants;
-    static JFrame jf;
+    static JFrame jf0, jf1; // startup window and fullscreen game
     static JPanel category;
     static JPanel cluePanel;
+    static File preset1 = new File("preset1.json");
+    static File preset2 = new File("preset2.json");
+    static File blank = new File("blank.json");
     static JTextArea moneyValue;
     static JTextArea clueString;
     static JTextArea answer;
     static ArrayList<Team> teams;
+    static Game game;
     
     public static void main(String args[]) {
+        /* 1. Open window
+         * 2. Display startup card with welcome message and template selection
+         * 3. Wait for teams to join on a new card
+         * 4. Start game in a new window
+         */
+
         // load the window
-        jf = new JFrame("JParty Host");
-        jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        Container jp = jf.getContentPane();
+        jf0 = new JFrame("JParty Host");
+        jf0.setSize(1000,1000);
+        jf0.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        JPanel cards = new JPanel(new CardLayout());
+
+        JPanel card1 = new JPanel(new BorderLayout());
+        JPanel card1lower = new JPanel(new FlowLayout());
+        JButton custom = new JButton("Select .json File");
+        JButton ps1 = new JButton("Preset 1");
+        JButton ps2 = new JButton("Preset 2");
+
         JTextArea text = new JTextArea("This is JParty!");
+        card1.add(text, BorderLayout.CENTER);
+        card1.add(card1lower, BorderLayout.SOUTH);
+
+        JPanel card2 = new JPanel();
+        jf0.add(cards);
+        jf0.setVisible(true);
 
         // select game settings
-        File userTemplate = null;
+        File template = new File("");
+        game = new Game(template);
 
         // wait for teams to join
         try {
             ServerSocket ss = new ServerSocket(5190);
             while (teams.size() < 3) { // how to implement teams readying up?
-                text.setText("Waiting for teams ("+teams.size()+"/3)...");
+                text.setText(String.format(prompts.WAITING_HOST, teams.size()));
+                text.setText("Waiting for teams to join ("+teams.size()+"/3)...");
                 Socket s = ss.accept();
                 teams.add(new Team(s));
                 new ProcessConnection(s).start();
@@ -56,7 +84,8 @@ public class host {
         }
 
         // start the game
-        // play();
+        // game = new Game();
+        game.play();
     }
 
     static class ProcessConnection extends Thread {
@@ -66,7 +95,7 @@ public class host {
         public void run() {
             try {
                 Scanner sin = new Scanner(s.getInputStream());
-                try {sleep(10);} catch (InterruptedException ix) {System.out.println("InterruptedException: "+ix.toString());}
+                while (!sin.hasNextLine()) {}
                 System.out.println("New connection from "+sin.nextLine()+":");
                 String line;
                 while (true) {
@@ -101,10 +130,21 @@ public class host {
     static class Game {
         ArrayList<Team> teams;
         File template;
+        Game(File template) {this.template=template;}
         public void play() {
 
         }
     }
 
-    class File {}
+    static class File {
+        String path;
+        File(String path) {this.path = path;}
+    }
+
+    static class ButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            //(e.getSource()).pause();
+        }
+    }
 }
