@@ -10,17 +10,12 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import javax.swing.*;
 
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-
 /**
  *
  * @author isabe
  */
 public class host {
-    static JFrame jf0, jf1; // startup window and fullscreen game
+    static JFrame jf; // startup window and fullscreen game
     static JPanel category;
     static JPanel cluePanel;
     static File preset1 = new File("preset1.json");
@@ -40,9 +35,9 @@ public class host {
          */
 
         // load the window
-        jf0 = new JFrame("JParty Host");
-        jf0.setSize(1000,1000);
-        jf0.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        jf = new JFrame("JParty Host");
+        jf.setSize(800,800);
+        jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         JPanel cards = new JPanel(new CardLayout());
 
         JPanel card1 = new JPanel(new BorderLayout());
@@ -50,14 +45,20 @@ public class host {
         JButton custom = new JButton("Select .json File");
         JButton ps1 = new JButton("Preset 1");
         JButton ps2 = new JButton("Preset 2");
+        card1lower.add(custom);
+        card1lower.add(ps1);
+        card1lower.add(ps2);
 
         JTextArea text = new JTextArea("This is JParty!");
+        // text.setAlignmentX(JTextArea.CENTER_ALIGNMENT);
         card1.add(text, BorderLayout.CENTER);
         card1.add(card1lower, BorderLayout.SOUTH);
 
         JPanel card2 = new JPanel();
-        jf0.add(cards);
-        jf0.setVisible(true);
+        cards.add(card1);
+        cards.add(card2);
+        jf.add(cards);
+        jf.setVisible(true);
 
         // select game settings
         File template = new File("");
@@ -116,6 +117,7 @@ public class host {
         boolean ready;
         int score;
         JButton right, wrong;
+        byte id;
         Team(Socket s) {
             this.s=s; 
             try {

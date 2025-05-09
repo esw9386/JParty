@@ -7,7 +7,6 @@ import java.net.Socket;
 import java.util.Scanner;
 import javax.swing.*;
 
-
 /**
  *
  * @author esw9386
@@ -50,7 +49,6 @@ public class client {
                         case signals.CLOSED:
                         case signals.OPEN:
                             setText("BUZZ IN");
-                        case signals.NEXT:
                         case signals.OVER:
                             over = true;
                     }
@@ -78,8 +76,8 @@ public class client {
                     switch (signal) {
                         case signals.CLOSED:
                         case signals.OPEN:
-                        case signals.NEXT:
                         case signals.WAITING:
+                        case signals.OVER:
                     }
                 }
             }

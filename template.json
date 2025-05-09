@@ -1,0 +1,375 @@
+{
+    "game": {
+        "single": [
+            {
+                "category": "",
+                "clues": [
+                    {
+                        "value": 200,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 400,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 600,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 800,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1000,
+                        "clue": "",
+                        "solution": ""
+                    }
+                ]
+            },
+            {
+                "category": "",
+                "clues": [
+                    {
+                        "value": 200,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 400,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 600,
+                        "clue": "",
+                        "solution": "",
+                        "dailyDouble": true
+                    },
+                    {
+                        "value": 800,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1000,
+                        "clue": "",
+                        "solution": ""
+                    }
+                ]
+            },
+            {
+                "category": "",
+                "clues": [
+                    {
+                        "value": 200,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 400,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 600,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 800,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1000,
+                        "clue": "",
+                        "solution": ""
+                    }
+                ]
+            },
+            {
+                "category": "",
+                "clues": [
+                    {
+                        "value": 200,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 400,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 600,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 800,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1000,
+                        "clue": "",
+                        "solution": ""
+                    }
+                ]
+            },
+            {
+                "category": "",
+                "clues": [
+                    {
+                        "value": 200,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 400,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 600,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 800,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1000,
+                        "clue": "",
+                        "solution": ""
+                    }
+                ]
+            },
+            {
+                "category": "",
+                "clues": [
+                    {
+                        "value": 200,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 400,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 600,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 800,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1000,
+                        "clue": "",
+                        "solution": ""
+                    }
+                ]
+            }
+        ],
+        "double": [
+            {
+                "category": "",
+                "clues": [
+                    {
+                        "value": 400,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 800,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1200,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1600,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 2000,
+                        "clue": "",
+                        "solution": ""
+                    }
+                ]
+            },
+            {
+                "category": "",
+                "clues": [
+                    {
+                        "value": 400,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 800,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1200,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1600,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 2000,
+                        "clue": "",
+                        "solution": ""
+                    }
+                ]
+            },
+            {
+                "category": "",
+                "clues": [
+                    {
+                        "value": 400,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 800,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1200,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1600,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 2000,
+                        "clue": "",
+                        "solution": ""
+                    }
+                ]
+            },
+            {
+                "category": "",
+                "clues": [
+                    {
+                        "value": 400,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 800,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1200,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1600,
+                        "clue": "",
+                        "solution": "",
+                        "dailyDouble": true
+                    },
+                    {
+                        "value": 2000,
+                        "clue": "",
+                        "solution": ""
+                    }
+                ]
+            },
+            {
+                "category": "",
+                "clues": [
+                    {
+                        "value": 400,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 800,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1200,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1600,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 2000,
+                        "clue": "",
+                        "solution": ""
+                    }
+                ]
+            },
+            {
+                "category": "Objects of My Hatred",
+                "clues":[
+                    {
+                        "value": 400,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 800,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1200,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 1600,
+                        "clue": "",
+                        "solution": ""
+                    },
+                    {
+                        "value": 2000,
+                        "clue": "",
+                        "solution": ""
+                    }
+                ]
+            }
+        ],
+        "final": {
+            "category": "Encryption",
+            "clue": "",
+            "solution": ""
+        }
+    }
+}
