@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
 import javax.swing.*;
+import javax.swing.border.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
@@ -18,12 +19,18 @@ public class host {
     static JLabel teamsText;
     static String blank = "template.txt";
     static String[] gameOptions = {"music.txt", "coding.txt", "Select File"};
-    static Color BG = new Color(0x314bcc);
-    static Color FG = new Color(0Xf7e686);
+    static Color BG = new Color(0x1721ad);
+    static Color FG = new Color(0Xd98c1a);
+    static Color HL = new Color(0x4A72E8);
     static JButton start;
     static ServerSocket ss; // static to be closed at end of game
     static Scanner gin; // static to be closed in excpetion handling
     static ArrayList<Team> teams = new ArrayList<>();
+    static Team activeTeam;
+    static ArrayList<JLabel> teamLabels = new ArrayList<>();
+    static final Object buzzLock = new Object();
+    static boolean buzzLocked = false;
+    static int buzzedTeam = -1; // 
     static Game game; // holds the game information
     
     public static void main(String args[]) {
@@ -93,6 +100,7 @@ public class host {
                 teamsText.setText(String.format(prompts.WAITING_HOST, teams.size()));
                 teamsText.setText("Waiting for teams to join ("+teams.size()+"/3)...");
                 Socket s = ss.accept();
+                Team team = new Team(s);
                 teams.add(new Team(s)); // adds each team to arraylist
                 new ProcessConnection(s).start();
             }
@@ -103,6 +111,7 @@ public class host {
     }
 
     static class ProcessConnection extends Thread { // connects each client to host (but not to each other)
+        int id;
         Socket s;
         ProcessConnection(Socket s) {this.s = s;}
         @Override
@@ -114,6 +123,8 @@ public class host {
                 String line;
                 while (true) {
                     if (sin.hasNextLine()) {
+                        synchronized (activeTeam) {activeTeam = teams.get(id);}
+                        
                         line = sin.nextLine();
                         // for (PrintStream stream : streams) {stream.print(line+'\n');}
                     }
@@ -135,6 +146,7 @@ public class host {
             try {
                 out = new PrintStream(s.getOutputStream());
                 in = new Scanner(s.getInputStream());
+                name = in.nextLine();
             } catch (IOException iox) {System.out.println("InterruptedException: "+iox.toString());}
             name = ""; score = 0;
         }
@@ -145,8 +157,12 @@ public class host {
 
     static class Game {
         ArrayList<Team> teams = new ArrayList<>();
+        JPanel boards, teamDisplay; 
         Board singleJ = new Board(), doubleJ = new Board();
+        // Board activeBoard = singleJ;
+        String activeBoard = "Single";
         Category finalJ;
+        Clue activeClue = new Clue();
         File template; 
 
         Game(String path) throws IOException, NumberFormatException {
@@ -163,13 +179,13 @@ public class host {
             
             if (!gin.nextLine().equals("Single Jeopardy")) {throw failure();}
             for (int i = 0; i < 6; i++) {
-                Category category = new Category(gin.nextLine());
+                Category category = new Category(gin.nextLine().toUpperCase());
                 for (int j = 0; j < 5; j++) {
                     try {value = Integer.parseInt(gin.nextLine());}
                     catch (NumberFormatException nfe) {throw nfe;}
                     question = gin.nextLine();
                     answer = gin.nextLine();
-                    category.clues.add(new Clue(value, question.toUpperCase(), answer.toUpperCase()));
+                    category.clues.add(new Clue(value, question, answer));
                 }
                 singleJ.categories.add(category);
                 if (!gin.nextLine().equals(".")) {throw failure();}
@@ -177,13 +193,13 @@ public class host {
             
             if (!gin.nextLine().equals("---") || !gin.nextLine().equals("Double Jeopardy")) {throw failure();}
             for (int i = 0; i < 6; i++) {
-                Category category = new Category(gin.nextLine());
+                Category category = new Category(gin.nextLine().toUpperCase());
                 for (int j = 0; j < 5; j++) {
-                    try { value = Integer.parseInt(gin.nextLine()); }
+                    try {value = Integer.parseInt(gin.nextLine());}
                     catch (NumberFormatException nfe) {throw nfe;}
                     question = gin.nextLine();
                     answer = gin.nextLine();
-                    category.clues.add(new Clue(value, question.toUpperCase(), answer.toUpperCase()));
+                    category.clues.add(new Clue(value, question, answer));
                 }
                 doubleJ.categories.add(category);
                 if (!gin.nextLine().equals(".")) {throw failure();}
@@ -200,22 +216,104 @@ public class host {
             main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             main.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-            JPanel clues = new JPanel();
-            clues.setBackground(Color.BLACK);
-            clues.setLayout(new GridLayout(6, 6, 5, 5));
-            for (int j = 0; j < 6; j++) clues.add(singleJ.categories.get(j));
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 6; j++)
-                    clues.add(singleJ.categories.get(j).clues.get(i));
+            singleJ.build();
+            doubleJ.build();
+            activeClue = new Clue();
+            activeClue.flip(); // only ever needs to show Q&A
+            boards = new JPanel(new CardLayout());
+            boards.add(singleJ, "Single");
+            boards.add(doubleJ, "Double");
+            boards.add(finalJ, "Final");
+            boards.add(activeClue, "Active");
 
-            JPanel bottom = new JPanel();  
-            bottom.setBackground(Color.GRAY);
+            JPanel bottom = new JPanel(new BorderLayout());  
+           // bottom.setBackground(Color.GRAY);
             bottom.setPreferredSize(new Dimension(600, 200));
-            JPanel sidebar = new JPanel();
-            sidebar.setLayout(new GridBagLayout());
-            bottom.add(sidebar);
+            
+            // Signals buttons
+            JPanel sidebar = new JPanel(new GridLayout(4, 1, 10, 10));
+            //sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.X_AXIS));
+            sidebar.setBackground(Color.GRAY);
+            sidebar.setBorder(BorderFactory.createTitledBorder("Signals"));
+            String[] signalNames = {"OPEN", "CLOSE", "NEXT", "OVER"};
+            for (String signal:signalNames) {
+                JButton button = new JButton(signal);
+                button.setFont(new Font("Arial", Font.BOLD, 25));
+                button.setAlignmentX(Component.CENTER_ALIGNMENT);
+                button.addActionListener(e -> {
+                    switch(button.getText()) {
+                        case "OPEN":
+                            for (Team team : teams) team.out.println(signals.OPEN);
+                        case "CLOSE":
+                            for (Team team : teams) team.out.println(signals.CLOSED);
+                        case "NEXT":
+                            ((CardLayout) boards.getLayout()).next(boards);
+                            break;
+                        case "OVER":
+                            // System.exit(0);
+                            main.dispose();
+                    }
+                    System.out.println("Signal: " + signal); // replace w/ actual logic
+                });
+                sidebar.add(button);
+            }         
+            bottom.add(sidebar, BorderLayout.WEST);
+            
+            // Team display
+            this.teamDisplay = new JPanel();
+            teamDisplay.setLayout(new FlowLayout(FlowLayout.CENTER, 100, 50));
+            teamDisplay.setBackground(Color.BLACK);
+            
+            System.out.println("Number of teams: " + teams.size()); // DEBUGGING
+            
+            for (Team team : this.teams) {
+                JPanel teamPanel = new JPanel();
+                teamPanel.setLayout(new BoxLayout(teamPanel, BoxLayout.Y_AXIS));
+                teamPanel.setBackground(Color.BLACK);
+                
+                // Team name
+                JLabel name = new JLabel(team.name, SwingConstants.CENTER);
+                name.setOpaque(true);
+                name.setBackground(Color.WHITE);
+                name.setForeground(Color.BLACK);
+                name.setFont(new Font("Arial", Font.BOLD, 30));
+                name.setPreferredSize(new Dimension(200, 50));
+                name.setAlignmentX(Component.CENTER_ALIGNMENT);
+                
+                JTextField scoreField = new JTextField("$0");
+                //score.setOpaque(true);
+                scoreField.setFont(new Font("Arial", Font.PLAIN, 25));
+                scoreField.setHorizontalAlignment(SwingConstants.CENTER);
+                scoreField.setEditable(true); // allow host to change score
+                scoreField.setBackground(Color.BLUE);
+                scoreField.setForeground(Color.YELLOW);
+                scoreField.setPreferredSize(new Dimension(200, 50));
+                scoreField.setAlignmentX(Component.CENTER_ALIGNMENT);
+                
+                scoreField.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            //update team score
+                            int newScore = Integer.parseInt(scoreField.getText().replace("$", ""));
+                            team.score = newScore; 
+                        }
+                        catch (NumberFormatException ex) { scoreField.setText("$0"); } // reset to 0
+                    }
+                });
+               
+                teamPanel.add(name);
+                teamPanel.add(scoreField);
+                teamPanel.setBorder(BorderFactory.createLineBorder(Color.WHITE)); // DEBUGGING
+                teamDisplay.add(teamPanel);
+            }
+            
+            bottom.add(teamDisplay, BorderLayout.CENTER);
+            
+            sidebar.setBorder(BorderFactory.createLineBorder(Color.RED));
+            teamDisplay.setBorder(BorderFactory.createLineBorder(Color.GREEN));
 
-            main.add(clues, BorderLayout.CENTER);
+            main.add(boards, BorderLayout.CENTER);
             main.add(bottom, BorderLayout.SOUTH);
             main.setVisible(true);
         }
@@ -224,31 +322,38 @@ public class host {
             
         }
 
-        class Board extends JPanel{ 
+        class Board extends JPanel { 
             ArrayList<Category> categories = new ArrayList<>();
-            // has ArrayList<Component> components
-
-            Board() {
-                setLayout(new GridLayout(1,6,5,0)); // six Category columns
-                setBackground(Color.BLACK);
-                // setOpaque(true);
+            Board() {setLayout(new GridLayout(6, 6, 5, 5)); setBackground(Color.BLACK);}
+            void build() {
+                for (int j = 0; j < 6; j++) add(categories.get(j));
+                for (int i = 0; i < 5; i++)
+                    for (int j = 0; j < 6; j++)
+                        add(categories.get(j).clues.get(i));
             }
-
-            public void add(Category cat) {super.add(cat); categories.add(cat);}
-
+            // @Override public void remove(Component comp) {}
+            // @Override public void remove(int i) {}
         }
         
         class Category extends JPanel {
-            JPanel head = new JPanel(new BorderLayout());
             JLabel label = new JLabel();
-            boolean isFinal;
             ArrayList<Clue> clues = new ArrayList<>();
 
             Category(String title) {
+                setLayout(new BorderLayout());
                 setBackground(BG);
+                // label.setText("<html><div style='text-align:center;'>" + title + "</div></html>");
                 label.setText(title);
+                // label.setAlignmentX(CENTER_ALIGNMENT);
+                // label.setAlignmentX(CENTER_ALIGNMENT);
                 label.setForeground(Color.WHITE);
-                add(label);
+                label.setFont(new Font ("Arial", Font.BOLD, 16));
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                label.setVerticalAlignment(SwingConstants.CENTER);
+                
+                add(label, BorderLayout.CENTER);
+                // label.setForeground(Color.WHITE);
+                // add(label);
                 // format(this);
             }
 
@@ -260,25 +365,25 @@ public class host {
         }
 
         class Clue extends JPanel {
-            String question, answer;
+            // String question, answer;
             int value;
             JLabel labelV = new JLabel(), labelQ = new JLabel(), labelA = new JLabel();
-            boolean answered=false;
-
-            Clue(int value, String question, String answer) {
-                // setBackground(BG);
+            JPanel top, bottom;
+            boolean answered=false, isFinal=false;
+            
+            Clue() {
                 setLayout(new CardLayout());
+                setBackground(BG);
+                labelV.setHorizontalAlignment(SwingConstants.CENTER);
+                labelV.setVerticalAlignment(SwingConstants.CENTER);
                 labelV.setForeground(FG);
+                labelV.setFont(new Font("Arial", Font.BOLD, 60)); 
                 labelQ.setForeground(Color.WHITE);
+                labelQ.setFont(new Font("Arial", Font.BOLD, 40));
                 labelA.setForeground(Color.WHITE);
-                this.value = value;
-                this.question = question;
-                this.answer = answer;
-                labelV.setText("$"+value);
-                labelQ.setText(question);
-                labelA.setText(answer);
-                JPanel top = new JPanel(new BorderLayout());
-                JPanel bottom = new JPanel(new BorderLayout());
+                labelA.setFont(new Font("Arial", Font.BOLD, 40));
+                top = new JPanel(new BorderLayout());
+                bottom = new JPanel(new BorderLayout());
                 top.add(labelV);
                 bottom.add(labelQ, BorderLayout.CENTER);
                 bottom.add(labelA, BorderLayout.SOUTH);
@@ -287,17 +392,66 @@ public class host {
                 // format(this);
                 add(top, "Top");
                 add(bottom, "Bottom");
+                addMouseListener(new ClueListener());
+                value=0;
+            }
+            Clue(int value, String question, String answer) {
+                this();
+                this.value = value;
+                labelV.setText("$"+value);
+                labelQ.setText(question);
+                labelA.setText(answer);
+                labelA.setVisible(false);
             }
 
-            // class ClueListener implements ActionListener {
-
-            // }
+            public void copy(Clue other) {
+                this.value = other.value;
+                this.labelV.setText(other.labelV.getText());
+                this.labelQ.setText(other.labelQ.getText());
+                this.labelA.setText(other.labelA.getText());
+                labelA.setVisible(other.labelA.isVisible());
+                this.isFinal=other.isFinal;
+            }
+            public boolean isEmpty() {
+                return (value==0 
+                    & labelV.getText().isEmpty() 
+                    & labelQ.getText().isEmpty() 
+                    & labelA.getText().isEmpty());
+            }
+            public void clear() {value = 0; labelV.setText(""); labelQ.setText(""); labelA.setText("");}
+            public void flip() {((CardLayout) getLayout()).next(this);}
+            public void reveal() {labelA.setVisible(true);}
+            class ClueListener implements MouseListener {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    Clue owner = (Clue) e.getSource();
+                    if (activeClue.isEmpty()) {
+                        activeClue.copy(owner);
+                        ((CardLayout) boards.getLayout()).last(boards);
+                    } else {
+                        if (!activeClue.labelA.isVisible()) activeClue.reveal();
+                        else {
+                            activeClue.clear();
+                            ((CardLayout) boards.getLayout()).show(boards, activeBoard);
+                        }
+                    }
+                }
+                @Override public void mousePressed(MouseEvent e) {}
+                @Override public void mouseReleased(MouseEvent e) {}
+                @Override public void mouseEntered(MouseEvent e) {
+                    Clue owner = (Clue) e.getSource();
+                    if (!activeClue.equals(owner) && activeClue!=owner) owner.top.setBackground(HL);
+                }
+                @Override public void mouseExited(MouseEvent e) {
+                    Clue owner = (Clue) e.getSource();
+                    if (!activeClue.equals(owner) && activeClue!=owner) owner.top.setBackground(BG);
+                }
+            }
 
         }
     }
     
     static class ButtonListener implements ActionListener { 
-        
         @Override
         public void actionPerformed(ActionEvent e) {
             JButton button = (JButton) e.getSource();
