@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  *
@@ -16,7 +17,7 @@ public class host {
     static JPanel cards = new JPanel(new CardLayout());
     static JLabel teamsText;
     static String blank = "template.txt";
-    static String[] gameOptions = {"music.txt", "coding.txt", "Select .txt File", "Download Blank Template"};
+    static String[] gameOptions = {"music.txt", "coding.txt", "Select File"};
     static Color BG = new Color(0x314bcc);
     static Color FG = new Color(0Xf7e686);
     static JButton start;
@@ -27,7 +28,7 @@ public class host {
     
     public static void main(String args[]) {
         // load the window
-        jf.setSize(600, 600);
+        jf.setSize(400, 400);
         jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // game select card
@@ -199,6 +200,7 @@ public class host {
             boards.add(doubleJ, "Double");
             boards.add(finalJ, "Final");
             // boards.setBackground(new Color(0xffffff00));
+            // (boards.getLayout()).show(boards, "Final");
             
             JPanel controls = new JPanel();  
             controls.setBackground(Color.GRAY);
@@ -307,9 +309,10 @@ public class host {
             CardLayout cl = (CardLayout)(cards.getLayout());
             
             switch (button.getText()) {
-                case "Select .txt File":
+                case "Select File":
                     // open and read file from computer
                     JFileChooser chooseFile = new JFileChooser();
+                    chooseFile.setFileFilter(new FileNameExtensionFilter("Text Files Only", "txt", "text"));
                     int value = chooseFile.showOpenDialog(null);
                     if (value == JFileChooser.APPROVE_OPTION) {
                         File chosenFile = chooseFile.getSelectedFile();
