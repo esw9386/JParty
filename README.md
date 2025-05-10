@@ -1,5 +1,4 @@
 # JParty
 
 ### Template Formatting
-JParty accepts JSON files as game templates. To make your own JParty game, download one of the preset templates shown when choosing a game, and edit the categories and clues. Java doesn't have native support for JSON but a [json-simple
-library](https://code.google.com/archive/p/json-simple/downloads) is downloadable.
+JParty accepts .txt files as game templates. To make your own JParty game, download the [blank template](template.txt) and replace the categories, clues, and answers with your own. The clue values can be changed as well, but this is not recommended.
