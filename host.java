@@ -36,6 +36,8 @@ public class host {
         gameSelect.setBackground(BG);
         gameSelect.setLayout(new BoxLayout(gameSelect, BoxLayout.Y_AXIS));
         JLabel text1 = new JLabel("This is JParty!");
+        text1.setBackground(BG);
+        text1.setForeground(Color.WHITE);
         text1.setOpaque(true);
         text1.setAlignmentX(Component.CENTER_ALIGNMENT);
         gameSelect.add(text1);
@@ -53,10 +55,13 @@ public class host {
         JPanel teamSelect = new JPanel();
         teamSelect.setBackground(BG);
         teamSelect.setLayout(new BoxLayout(teamSelect, BoxLayout.Y_AXIS));
+        teamSelect.setLayout(new BorderLayout());
         teamsText = new JLabel("Waiting for teams to join. . .");
+        teamsText.setBackground(BG);
+        teamsText.setForeground(Color.WHITE);
         teamsText.setOpaque(true);
         teamsText.setAlignmentX(Component.CENTER_ALIGNMENT);
-        teamSelect.add(teamsText);
+        teamSelect.add(teamsText, BorderLayout.NORTH);
         teamSelect.add(Box.createVerticalStrut(100));
         JPanel teamSlots = new JPanel(new GridLayout(1, 3, 10, 0));
         teamSlots.setBackground(BG);
@@ -66,13 +71,13 @@ public class host {
             slot.setBackground(Color.WHITE);
             teamSlots.add(slot);
         }        
-        teamSelect.add(teamSlots);
+        teamSelect.add(teamSlots, BorderLayout.CENTER);
         // JPanel startPanel = new JPanel();
         // startPanel.setBackground(BG);
         start = new JButton("Start Game");
         start.addActionListener(new ButtonListener());
         // startPanel.add(start);
-        teamSelect.add(start);
+        teamSelect.add(start, BorderLayout.SOUTH);
         // teamSelect.add(startPanel);
         
         // add cards to CardLayout and to window
@@ -164,7 +169,7 @@ public class host {
                     catch (NumberFormatException nfe) {throw nfe;}
                     question = gin.nextLine();
                     answer = gin.nextLine();
-                    category.add(new Clue(value, question.toUpperCase(), answer.toUpperCase()));
+                    category.clues.add(new Clue(value, question.toUpperCase(), answer.toUpperCase()));
                 }
                 singleJ.categories.add(category);
                 if (!gin.nextLine().equals(".")) {throw failure();}
@@ -178,7 +183,7 @@ public class host {
                     catch (NumberFormatException nfe) {throw nfe;}
                     question = gin.nextLine();
                     answer = gin.nextLine();
-                    category.add(new Clue(value, question.toUpperCase(), answer.toUpperCase()));
+                    category.clues.add(new Clue(value, question.toUpperCase(), answer.toUpperCase()));
                 }
                 doubleJ.categories.add(category);
                 if (!gin.nextLine().equals(".")) {throw failure();}
@@ -195,24 +200,24 @@ public class host {
             main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             main.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-            JPanel boards = new JPanel(new CardLayout());
-            boards.add(singleJ, "Single");
-            boards.add(doubleJ, "Double");
-            boards.add(finalJ, "Final");
-            // boards.setBackground(new Color(0xffffff00));
-            // (boards.getLayout()).show(boards, "Final");
-            
-            JPanel controls = new JPanel();  
-            controls.setBackground(Color.GRAY);
-            controls.setPreferredSize(new Dimension(600, 200));
-            JPanel sidebar = new JPanel(new GridBagLayout());
-            sidebar.add(new JLabel("not empty"));
-            controls.add(sidebar);
-            
-            main.add(boards, BorderLayout.CENTER);
-            main.add(controls, BorderLayout.SOUTH);
+            JPanel clues = new JPanel();
+            clues.setBackground(Color.BLACK);
+            clues.setLayout(new GridLayout(6, 6, 5, 5));
+            for (int j = 0; j < 6; j++) clues.add(singleJ.categories.get(j));
+            for (int i = 0; i < 5; i++)
+                for (int j = 0; j < 6; j++)
+                    clues.add(singleJ.categories.get(j).clues.get(i));
+
+            JPanel bottom = new JPanel();  
+            bottom.setBackground(Color.GRAY);
+            bottom.setPreferredSize(new Dimension(600, 200));
+            JPanel sidebar = new JPanel();
+            sidebar.setLayout(new GridBagLayout());
+            bottom.add(sidebar);
+
+            main.add(clues, BorderLayout.CENTER);
+            main.add(bottom, BorderLayout.SOUTH);
             main.setVisible(true);
-            System.out.println(singleJ.categories);
         }
         
         public void guess(int id) {
@@ -221,11 +226,11 @@ public class host {
 
         class Board extends JPanel{ 
             ArrayList<Category> categories = new ArrayList<>();
+            // has ArrayList<Component> components
 
-            Board(){
+            Board() {
                 setLayout(new GridLayout(1,6,5,0)); // six Category columns
                 setBackground(Color.BLACK);
-                // add(new JLabel("hi"));
                 // setOpaque(true);
             }
 
@@ -234,20 +239,17 @@ public class host {
         }
         
         class Category extends JPanel {
-            JPanel head = new JPanel();
+            JPanel head = new JPanel(new BorderLayout());
             JLabel label = new JLabel();
             boolean isFinal;
             ArrayList<Clue> clues = new ArrayList<>();
 
             Category(String title) {
                 setBackground(BG);
-                setLayout(new GridLayout(6,1,0,5));
                 label.setText(title);
                 label.setForeground(Color.WHITE);
-                head.add(label);
-                add(head);
-                for (Clue clue:clues) {add(clue);}
-                // setOpaque(true);
+                add(label);
+                // format(this);
             }
 
             boolean isEmpty() {
@@ -255,26 +257,17 @@ public class host {
                     if (!clue.answered) {return false;}
                 return true;
             }
-
-            void add(Clue clue) {super.add(clue); clues.add(clue);}
-
-            // @Override
-            // protected void paintComponent(Graphics g) {
-            //     super.paintComponent(g);
-            //     if (!isEmpty()) {label.setVisible(false);}
-            // }
         }
 
         class Clue extends JPanel {
-            JPanel cards = new JPanel(new CardLayout()), 
-                top = new JPanel(new BorderLayout()), 
-                bottom = new JPanel(new BorderLayout());
             String question, answer;
             int value;
             JLabel labelV = new JLabel(), labelQ = new JLabel(), labelA = new JLabel();
             boolean answered=false;
 
             Clue(int value, String question, String answer) {
+                // setBackground(BG);
+                setLayout(new CardLayout());
                 labelV.setForeground(FG);
                 labelQ.setForeground(Color.WHITE);
                 labelA.setForeground(Color.WHITE);
@@ -284,20 +277,22 @@ public class host {
                 labelV.setText("$"+value);
                 labelQ.setText(question);
                 labelA.setText(answer);
-                top.add(labelV, BorderLayout.CENTER);
+                JPanel top = new JPanel(new BorderLayout());
+                JPanel bottom = new JPanel(new BorderLayout());
+                top.add(labelV);
                 bottom.add(labelQ, BorderLayout.CENTER);
                 bottom.add(labelA, BorderLayout.SOUTH);
-                cards.add(top, "Top");
-                cards.add(bottom, "Bottom");
-                add(cards);
-                setBackground(BG);
-                // setOpaque(true);
+                format(top);
+                format(bottom);
+                // format(this);
+                add(top, "Top");
+                add(bottom, "Bottom");
             }
 
-            // @Override
-            // protected void paintComponent(Graphics g) {
-            //     super.paintComponent(g);
+            // class ClueListener implements ActionListener {
+
             // }
+
         }
     }
     
@@ -320,7 +315,9 @@ public class host {
                             game = new Game(chosenFile.getAbsolutePath());
                             cl.show(cards, "Teams");
                         }
-                        catch (IOException | NumberFormatException x) {System.out.println(x);}
+                        catch (IOException | NumberFormatException x) {
+                            JOptionPane.showMessageDialog(null, "Error loading file:\n" + x.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        }
                     }
                     break;
                 case "Start Game":
@@ -333,10 +330,19 @@ public class host {
                         cl.show(cards, "Teams");
                         break;
                     }
-                    catch (IOException | NumberFormatException x) {System.out.println(x);}
+                    catch (IOException | NumberFormatException x) {
+                        JOptionPane.showMessageDialog(null, "Error loading file:\n" + x.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
             }
         }
     } 
+
+    static public void format(JPanel panel) {
+        panel.setBackground(BG);
+        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.setAlignmentY(Component.CENTER_ALIGNMENT);
+    }
+
     public class prompts {
         static final String CONNECT_INIT = "Type the host server and tap this button to connect."; // first msg that appears when a client opens the window
         static final String CONNECT_FAIL = "Connection to %s failed; try again"; // typed invalid server name
