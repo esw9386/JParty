@@ -58,7 +58,7 @@ public class host {
         teamSelect.setBackground(BG);
         teamSelect.setLayout(new BoxLayout(teamSelect, BoxLayout.Y_AXIS));
         teamSelect.setLayout(new BorderLayout());
-        teamsText = new JLabel("Waiting for teams to join. . .", SwingConstants.CENTER);
+        teamsText = new JLabel("Waiting for teams to join...", SwingConstants.CENTER);
         teamsText.setBackground(BG);
         teamsText.setForeground(Color.WHITE);
         teamsText.setOpaque(true);
@@ -89,7 +89,6 @@ public class host {
         try {
             ss = new ServerSocket(5190);
             while (teams.size() < 3) { 
-                teamsText.setText(String.format("Waiting for teams to join (%d/3)...", teams.size()));
                 teamsText.setText("Waiting for teams to join ("+teams.size()+"/3)...");
                 Socket s = ss.accept();
                 Team team = new Team(s);
@@ -143,17 +142,13 @@ public class host {
                                     team.out.println(signals.BUZZ);
                                     
                                     // Lock other teams' buzzers
-                                    for (Team t : teams) {
-                                        if (t != team) { t.out.println(signals.CLOSED); }
-                                    }
+                                    for (Team t : teams) if (t != team) { t.out.println(signals.CLOSED); }
                                 }
                             }
                         }
                     }
                 }
-            } catch (Exception ex) {
-                System.out.println("Connection error: " + ex);
-            }
+            } catch (Exception ex) {System.out.println("Connection error: " + ex);}
         }
     }
 
@@ -256,7 +251,6 @@ public class host {
             
             // Signals buttons
             JPanel sidebar = new JPanel(new GridLayout(4, 1, 10, 10));
-            //sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.X_AXIS));
             sidebar.setBackground(Color.GRAY);
             sidebar.setBorder(BorderFactory.createTitledBorder("Signals"));
             String[] signalNames = {"OPEN", "CLOSE", "NEXT", "OVER"};
@@ -271,7 +265,6 @@ public class host {
                             for (Team team : teams) team.out.println(signals.OPEN);
                             // Reset colors
                             for (Team team : teams) {
-                               // SwingUtilities.invokeLater(() -> team.namelabel.setBackground(Color.WHITE));
                                team.nameLabel.setBackground(Color.WHITE);
                             }
                             break; // DIFFERENT
@@ -323,16 +316,13 @@ public class host {
                 scoreField.setPreferredSize(new Dimension(200, 50));
                 scoreField.setAlignmentX(Component.CENTER_ALIGNMENT);
                 
-                scoreField.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        try {
-                            //update team score
-                            int newScore = Integer.parseInt(scoreField.getText().replace("$", ""));
-                            team.score = newScore; 
-                        }
-                        catch (NumberFormatException ex) { scoreField.setText("$0"); } // reset to 0
+                scoreField.addActionListener((e) -> {
+                    try {
+                        //update team score
+                        int newScore = Integer.parseInt(scoreField.getText().replace("$", ""));
+                        team.score = newScore; 
                     }
+                    catch (NumberFormatException ex) { scoreField.setText("$0"); } // reset to 0
                 });
                
                 teamPanel.add(nameLabel);
@@ -346,14 +336,11 @@ public class host {
             sidebar.setBorder(BorderFactory.createLineBorder(Color.RED));
             teamDisplay.setBorder(BorderFactory.createLineBorder(Color.GREEN));
 
-
             main.add(boards, BorderLayout.CENTER);
             main.add(bottom, BorderLayout.SOUTH);
             main.setVisible(true);
             
-            for (Team t : teams) {
-                t.out.println(signals.CLOSED); // lock buzzers initially
-            }
+            for (Team t : teams) t.out.println(signals.CLOSED); // lock buzzers initially
             host.buzzLocked = true;
         }
         

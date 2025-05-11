@@ -58,8 +58,9 @@ public class client {
         String server;
         Socket s;
 
-        Buzzer(String text) { super(text); }
+        Buzzer(String text) {super(text);}
         
+        // establish connection with host
         public void setup() throws IOException {
             if (sout==null) {
                 s = new Socket(server, 5190);
@@ -70,16 +71,16 @@ public class client {
             }
         }
 
-        @Override
+        @Override // begin to read signals from host
         public void run() {
             setText("Welcome to JParty");
             while (!over) {
                 if (sin.hasNextLine()) {
                     switch (sin.nextLine()) {
-                        case signals.WAITING:
+                        case signals.WAITING: // game has not begun
                             setText("Waiting for teams to join...");
                             break;
-                        case signals.CLOSED: 
+                        case signals.CLOSED: // clue has not been read or opponent has buzzed
                             setText(CLOSED);
                             break;
                         case signals.OPEN: // clue has been read and clients are prompted to buzz
