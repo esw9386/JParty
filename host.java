@@ -6,7 +6,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
 import javax.swing.*;
-import javax.swing.border.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
@@ -17,20 +16,16 @@ public class host {
     static JFrame jf = new JFrame("JParty Host"); 
     static JPanel cards = new JPanel(new CardLayout());
     static JLabel teamsText;
-    static String blank = "template.txt";
-    static String[] gameOptions = {"music.txt", "coding.txt", "Select File"};
+    static String[] gameOptions = {"coding.txt", "Select File"};
     static Color BG = new Color(0x1721ad);
     static Color FG = new Color(0Xd98c1a);
     static Color HL = new Color(0x4A72E8);
     static JButton start;
     static ServerSocket ss; // static to be closed at end of game
-    static Scanner gin; // static to be closed in excpetion handling
+    static Scanner gin; // static to be closed in exception handling
     static ArrayList<Team> teams = new ArrayList<>();
-    static Team activeTeam;
     static ArrayList<JLabel> teamLabels = new ArrayList<>();
-    static final Object buzzLock = new Object();
     static boolean buzzLocked = false;
-    static int buzzedTeam = -1; // 
     static Game game; // holds the game information
     
     public static void main(String args[]) {
@@ -63,7 +58,7 @@ public class host {
         teamSelect.setBackground(BG);
         teamSelect.setLayout(new BoxLayout(teamSelect, BoxLayout.Y_AXIS));
         teamSelect.setLayout(new BorderLayout());
-        teamsText = new JLabel("Waiting for teams to join. . .");
+        teamsText = new JLabel("Waiting for teams to join. . .", SwingConstants.CENTER);
         teamsText.setBackground(BG);
         teamsText.setForeground(Color.WHITE);
         teamsText.setOpaque(true);
@@ -73,19 +68,16 @@ public class host {
         JPanel teamSlots = new JPanel(new GridLayout(1, 3, 10, 0));
         teamSlots.setBackground(BG);
         for (int i=1; i<=3; i++) {
-            JLabel slot = new JLabel("Team "+i, SwingConstants.CENTER);
+            JLabel slot = new JLabel("Team "+i, SwingConstants.CENTER); // CENTERED
             slot.setOpaque(true);
             slot.setBackground(Color.WHITE);
             teamSlots.add(slot);
+            teamLabels.add(slot); 
         }        
         teamSelect.add(teamSlots, BorderLayout.CENTER);
-        // JPanel startPanel = new JPanel();
-        // startPanel.setBackground(BG);
         start = new JButton("Start Game");
         start.addActionListener(new ButtonListener());
-        // startPanel.add(start);
         teamSelect.add(start, BorderLayout.SOUTH);
-        // teamSelect.add(startPanel);
         
         // add cards to CardLayout and to window
         cards.add(gameSelect, "Games");
@@ -97,39 +89,71 @@ public class host {
         try {
             ss = new ServerSocket(5190);
             while (teams.size() < 3) { 
-                teamsText.setText(String.format(prompts.WAITING_HOST, teams.size()));
+                teamsText.setText(String.format("Waiting for teams to join (%d/3)...", teams.size()));
                 teamsText.setText("Waiting for teams to join ("+teams.size()+"/3)...");
                 Socket s = ss.accept();
                 Team team = new Team(s);
-                teams.add(new Team(s)); // adds each team to arraylist
-                new ProcessConnection(s).start();
+                teams.add(team); // adds each team to arraylist 
+                new ProcessConnection(team).start(); 
             }
         } catch (IOException ex) {System.out.println("IOException: "+ex.toString());}
 
         // wait for teams to select names and ready up
         teamsText.setText("Waiting for teams to be ready...");
+        game.setTeams(teams); // set game.teams properly
     }
 
-    static class ProcessConnection extends Thread { // connects each client to host (but not to each other)
-        int id;
-        Socket s;
-        ProcessConnection(Socket s) {this.s = s;}
+    static class ProcessConnection extends Thread { 
+        Team team; 
+        ProcessConnection(Team team) {this.team = team;} 
+        
         @Override
         public void run() {
             try {
-                Scanner sin = new Scanner(s.getInputStream());
-                while (!sin.hasNextLine()) {}
-                System.out.println("New connection from "+sin.nextLine()+":");
-                String line;
                 while (true) {
-                    if (sin.hasNextLine()) {
-                        synchronized (activeTeam) {activeTeam = teams.get(id);}
-                        
-                        line = sin.nextLine();
-                        // for (PrintStream stream : streams) {stream.print(line+'\n');}
+                    while (team.in.hasNextLine()) { 
+                        String input = team.in.nextLine(); 
+
+                        if (team.name.isEmpty()) {
+                            team.name = input;
+                            int index = teams.indexOf(team);
+                            if (index >= 0 && index < teamLabels.size()) {
+                                JLabel label = teamLabels.get(index);
+                                SwingUtilities.invokeLater(() -> label.setText(team.name));
+                            }
+                            System.out.println("New team connected: " + team.name);
+                            teamsText.setText("Waiting for teams to be ready. . .");
+                        } else if (input.equals(signals.BUZZ)) {
+                            synchronized (host.class) {
+                                if (!buzzLocked) {
+                                    buzzLocked = true;
+                                    teams.indexOf(team);
+                                    System.out.println("Buzz received from: " + team.name);
+                                    
+                                    // Highlight buzzing team
+                                    SwingUtilities.invokeLater(() -> {
+                                        if (team.nameLabel != null) {
+                                            team.nameLabel.setOpaque(true);
+                                            team.nameLabel.setBackground(Color.YELLOW);
+                                            System.out.println("Background now: " + team.nameLabel.getBackground());
+                                            team.nameLabel.repaint();
+                                        }
+                                    });
+                                    
+                                    team.out.println(signals.BUZZ);
+                                    
+                                    // Lock other teams' buzzers
+                                    for (Team t : teams) {
+                                        if (t != team) { t.out.println(signals.CLOSED); }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-            } catch (IOException iox) {System.out.println("IOException: "+iox.toString());}
+            } catch (Exception ex) {
+                System.out.println("Connection error: " + ex);
+            }
         }
     }
 
@@ -138,15 +162,15 @@ public class host {
         PrintStream out;
         Scanner in;
         String name;
+        JLabel nameLabel; // DIFFERENT
         int score;
-//        JButton right, wrong;
         
         Team(Socket s) {
             this.s = s; 
             try {
                 out = new PrintStream(s.getOutputStream());
                 in = new Scanner(s.getInputStream());
-                name = in.nextLine();
+               // name = in.nextLine(); // DIFFERENT -- adding this prevents the label on card2 from changing
             } catch (IOException iox) {System.out.println("InterruptedException: "+iox.toString());}
             name = ""; score = 0;
         }
@@ -157,10 +181,9 @@ public class host {
 
     static class Game {
         ArrayList<Team> teams = new ArrayList<>();
-        JPanel boards, teamDisplay; 
+        JPanel boards, teamDisplay;
         Board singleJ = new Board(), doubleJ = new Board();
-        // Board activeBoard = singleJ;
-        String activeBoard = "Single";
+        String activeBoard = "Single"; // change to double in actionlistener (when clicking next)
         Category finalJ;
         Clue activeClue = new Clue();
         File template; 
@@ -170,7 +193,7 @@ public class host {
             initialize();
         }; 
         
-        public void setTeams(ArrayList<host.Team> teams) {this.teams = teams;} // sets list of teams in this file
+        public void setTeams(ArrayList<Team> teams) {this.teams = teams;} // sets list of teams in this file
         
         private void initialize() throws IOException, FileNotFoundException {
             gin = new Scanner(template);
@@ -179,13 +202,13 @@ public class host {
             
             if (!gin.nextLine().equals("Single Jeopardy")) {throw failure();}
             for (int i = 0; i < 6; i++) {
-                Category category = new Category(gin.nextLine().toUpperCase());
+                Category category = new Category(gin.nextLine());
                 for (int j = 0; j < 5; j++) {
                     try {value = Integer.parseInt(gin.nextLine());}
                     catch (NumberFormatException nfe) {throw nfe;}
                     question = gin.nextLine();
                     answer = gin.nextLine();
-                    category.clues.add(new Clue(value, question, answer));
+                    category.clues.add(new Clue(value, question.toUpperCase(), answer.toUpperCase()));
                 }
                 singleJ.categories.add(category);
                 if (!gin.nextLine().equals(".")) {throw failure();}
@@ -193,13 +216,13 @@ public class host {
             
             if (!gin.nextLine().equals("---") || !gin.nextLine().equals("Double Jeopardy")) {throw failure();}
             for (int i = 0; i < 6; i++) {
-                Category category = new Category(gin.nextLine().toUpperCase());
+                Category category = new Category(gin.nextLine());
                 for (int j = 0; j < 5; j++) {
-                    try {value = Integer.parseInt(gin.nextLine());}
+                    try { value = Integer.parseInt(gin.nextLine()); }
                     catch (NumberFormatException nfe) {throw nfe;}
                     question = gin.nextLine();
                     answer = gin.nextLine();
-                    category.clues.add(new Clue(value, question, answer));
+                    category.clues.add(new Clue(value, question.toUpperCase(), answer.toUpperCase()));
                 }
                 doubleJ.categories.add(category);
                 if (!gin.nextLine().equals(".")) {throw failure();}
@@ -207,7 +230,9 @@ public class host {
             
             if (!gin.nextLine().equals("---") || !gin.nextLine().equals("Final Jeopardy")) {throw failure();}
             finalJ = new Category(gin.nextLine());
-            finalJ.add(new Clue(-1, gin.nextLine(), gin.nextLine()));
+            Clue finalClue = new Clue(-1, gin.nextLine(), gin.nextLine());
+            finalClue.labelV.setText(finalJ.label.getText());
+            finalJ.add(finalClue);
             gin.close();
         }
         
@@ -215,7 +240,7 @@ public class host {
             JFrame main = new JFrame("It's Time for JParty!");
             main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             main.setExtendedState(JFrame.MAXIMIZED_BOTH);
-
+            
             singleJ.build();
             doubleJ.build();
             activeClue = new Clue();
@@ -226,8 +251,7 @@ public class host {
             boards.add(finalJ, "Final");
             boards.add(activeClue, "Active");
 
-            JPanel bottom = new JPanel(new BorderLayout());  
-           // bottom.setBackground(Color.GRAY);
+            JPanel bottom = new JPanel(new BorderLayout());
             bottom.setPreferredSize(new Dimension(600, 200));
             
             // Signals buttons
@@ -240,20 +264,29 @@ public class host {
                 JButton button = new JButton(signal);
                 button.setFont(new Font("Arial", Font.BOLD, 25));
                 button.setAlignmentX(Component.CENTER_ALIGNMENT);
-                button.addActionListener(e -> {
+                button.addActionListener((ActionEvent e) -> {
                     switch(button.getText()) {
                         case "OPEN":
+                            buzzLocked = false;
                             for (Team team : teams) team.out.println(signals.OPEN);
+                            // Reset colors
+                            for (Team team : teams) {
+                               // SwingUtilities.invokeLater(() -> team.namelabel.setBackground(Color.WHITE));
+                               team.nameLabel.setBackground(Color.WHITE);
+                            }
+                            break; // DIFFERENT
                         case "CLOSE":
                             for (Team team : teams) team.out.println(signals.CLOSED);
+                            break; // DIFFERENT
                         case "NEXT":
                             ((CardLayout) boards.getLayout()).next(boards);
+                            if (activeBoard.equals("Single")) { activeBoard = "Double"; }
+                            else if (activeBoard.equals("Double")) { activeBoard = "Final"; }
                             break;
                         case "OVER":
-                            // System.exit(0);
-                            main.dispose();
+                            main.dispose();                        
                     }
-                    System.out.println("Signal: " + signal); // replace w/ actual logic
+                    System.out.println("Signal: " + signal); 
                 });
                 sidebar.add(button);
             }         
@@ -272,16 +305,16 @@ public class host {
                 teamPanel.setBackground(Color.BLACK);
                 
                 // Team name
-                JLabel name = new JLabel(team.name, SwingConstants.CENTER);
-                name.setOpaque(true);
-                name.setBackground(Color.WHITE);
-                name.setForeground(Color.BLACK);
-                name.setFont(new Font("Arial", Font.BOLD, 30));
-                name.setPreferredSize(new Dimension(200, 50));
-                name.setAlignmentX(Component.CENTER_ALIGNMENT);
+                JLabel nameLabel = new JLabel(team.name, SwingConstants.CENTER);
+                team.nameLabel = nameLabel; // assign for easy updates // DIFFERENT
+                nameLabel.setOpaque(true);
+                nameLabel.setBackground(Color.WHITE);
+                nameLabel.setForeground(Color.BLACK);
+                nameLabel.setFont(new Font("Arial", Font.BOLD, 30));
+                nameLabel.setPreferredSize(new Dimension(200, 50));
+                nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
                 
                 JTextField scoreField = new JTextField("$0");
-                //score.setOpaque(true);
                 scoreField.setFont(new Font("Arial", Font.PLAIN, 25));
                 scoreField.setHorizontalAlignment(SwingConstants.CENTER);
                 scoreField.setEditable(true); // allow host to change score
@@ -302,7 +335,7 @@ public class host {
                     }
                 });
                
-                teamPanel.add(name);
+                teamPanel.add(nameLabel);
                 teamPanel.add(scoreField);
                 teamPanel.setBorder(BorderFactory.createLineBorder(Color.WHITE)); // DEBUGGING
                 teamDisplay.add(teamPanel);
@@ -313,26 +346,33 @@ public class host {
             sidebar.setBorder(BorderFactory.createLineBorder(Color.RED));
             teamDisplay.setBorder(BorderFactory.createLineBorder(Color.GREEN));
 
+
             main.add(boards, BorderLayout.CENTER);
             main.add(bottom, BorderLayout.SOUTH);
             main.setVisible(true);
+            
+            for (Team t : teams) {
+                t.out.println(signals.CLOSED); // lock buzzers initially
+            }
+            host.buzzLocked = true;
         }
         
         public void guess(int id) {
             
         }
 
-        class Board extends JPanel { 
+        class Board extends JPanel{ 
             ArrayList<Category> categories = new ArrayList<>();
-            Board() {setLayout(new GridLayout(6, 6, 5, 5)); setBackground(Color.BLACK);}
+            Board() {
+                setLayout(new GridLayout(6,6,5,5)); // six Category columns
+                setBackground(Color.BLACK);
+            }
             void build() {
                 for (int j = 0; j < 6; j++) add(categories.get(j));
                 for (int i = 0; i < 5; i++)
                     for (int j = 0; j < 6; j++)
                         add(categories.get(j).clues.get(i));
             }
-            // @Override public void remove(Component comp) {}
-            // @Override public void remove(int i) {}
         }
         
         class Category extends JPanel {
@@ -342,19 +382,14 @@ public class host {
             Category(String title) {
                 setLayout(new BorderLayout());
                 setBackground(BG);
-                // label.setText("<html><div style='text-align:center;'>" + title + "</div></html>");
-                label.setText(title);
-                // label.setAlignmentX(CENTER_ALIGNMENT);
-                // label.setAlignmentX(CENTER_ALIGNMENT);
+                
+                label.setText("<html><div style='text-align:center;'>" + title + "</div></html>"); // DIFFERENT -- this is so text can wrap if it's too long to fit in one line
                 label.setForeground(Color.WHITE);
-                label.setFont(new Font ("Arial", Font.BOLD, 16));
+                label.setFont(new Font ("Arial", Font.BOLD, 25));
                 label.setHorizontalAlignment(SwingConstants.CENTER);
                 label.setVerticalAlignment(SwingConstants.CENTER);
                 
                 add(label, BorderLayout.CENTER);
-                // label.setForeground(Color.WHITE);
-                // add(label);
-                // format(this);
             }
 
             boolean isEmpty() {
@@ -365,12 +400,11 @@ public class host {
         }
 
         class Clue extends JPanel {
-            // String question, answer;
             int value;
             JLabel labelV = new JLabel(), labelQ = new JLabel(), labelA = new JLabel();
             JPanel top, bottom;
             boolean answered=false, isFinal=false;
-            
+
             Clue() {
                 setLayout(new CardLayout());
                 setBackground(BG);
@@ -380,8 +414,10 @@ public class host {
                 labelV.setFont(new Font("Arial", Font.BOLD, 60)); 
                 labelQ.setForeground(Color.WHITE);
                 labelQ.setFont(new Font("Arial", Font.BOLD, 40));
+                labelQ.setHorizontalAlignment(SwingConstants.CENTER);
                 labelA.setForeground(Color.WHITE);
                 labelA.setFont(new Font("Arial", Font.BOLD, 40));
+                labelA.setHorizontalAlignment(SwingConstants.CENTER);
                 top = new JPanel(new BorderLayout());
                 bottom = new JPanel(new BorderLayout());
                 top.add(labelV);
@@ -403,7 +439,7 @@ public class host {
                 labelA.setText(answer);
                 labelA.setVisible(false);
             }
-
+            
             public void copy(Clue other) {
                 this.value = other.value;
                 this.labelV.setText(other.labelV.getText());
@@ -447,11 +483,11 @@ public class host {
                     if (!activeClue.equals(owner) && activeClue!=owner) owner.top.setBackground(BG);
                 }
             }
-
         }
     }
     
     static class ButtonListener implements ActionListener { 
+        
         @Override
         public void actionPerformed(ActionEvent e) {
             JButton button = (JButton) e.getSource();
@@ -489,26 +525,17 @@ public class host {
                     }
             }
         }
-    } 
+    }
 
     static public void format(JPanel panel) {
         panel.setBackground(BG);
         panel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.setAlignmentY(Component.CENTER_ALIGNMENT);
     }
-
-    public class prompts {
-        static final String CONNECT_INIT = "Type the host server and tap this button to connect."; // first msg that appears when a client opens the window
-        static final String CONNECT_FAIL = "Connection to %s failed; try again"; // typed invalid server name
-        static final String WAITING_HOST = "Waiting for teams to join (%d/3)..."; // msg for host while contestants are still joining (WAITING signal)
-        static final String WAITING_CLIENT = "Waiting for teams to join..."; // msg for client while others are still able to join (WAITING signal)
-    }
     
     public class signals {
-        static final String WAITING = "0"; // not every contestant has joined yet // Ready button for host 
         static final String CLOSED = "1"; // buzzer is locked as a question has not yet been fully read // Lock buzzer button for host
         static final String OPEN = "2"; // question has been read and anyone can buzz in // Open buzzer button for host
-    //    static final String NEXT = "3"; // moving onto next clue; host can just close the buzzers
-        static final String OVER = "4"; // when single jeopardy ends // End game button for host
+        static final String BUZZ = "B"; // buzzer signal from client
     }
 }

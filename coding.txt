@@ -1,212 +1,212 @@
 Single Jeopardy
-Professors
+History
 200
-Question
-Answer
+Java was originally called this
+Oak
 400
-Question
-Answer
+The design of Java is chiefly attributed to him
+James Gosling
 600
-Question
-Answer
+Java releases a new version this many times a year
+Two
 800
-Question
-Answer
+The syntax of Java was modeled after this programming language
+C/C++
 1000
-Question
-Answer
+The handoff of program execution to this revolutionized development
+JVM (Java Virtual Machine)
 .
-Python Weaknesses
+Swing Components
 200
-Question
-Answer
+This component is Javanese for window
+JFrame
 400
-Question
-Answer
+This component is almost useless without an ActionListener
+JButton
 600
-Question
-Answer
+This component is the Java equivalent of a <div> in HTML
+JPanel
 800
-Question
-Answer
+This component prompts users for input in a popup window
+JOptionPane
 1000
-Question
-Answer
+This allows its components' view to extend past its container
+JScrollPane
 .
 Exceptions
 200
-Question
-Answer
+This type of exception occurs when a program references a variable that has yet to be initialized
+NullPointerException
 400
-Question
-Answer
+This exception occurs when a thread does not complete its waiting or sleeping
+InterruptedException
 600
-Question
-Answer
+This occurs when you try to divide an integer by zero
+ArithmeticException
 800
-Question
-Answer
+This class is extended by ObjectStreamException and FileNotFoundException
+IOException
 1000
-Question
-Answer
+This is thrown when you try to access an element past the end of an array
+IndexOutOfBoundsException
 .
 Keywords
 200
-Question
-Answer
+This access modifier allows a member to be seen from anywhere
+public
 400
-Question
-Answer
+This token marks a field as constant or a method as non-overrideable
+final
 600
-Question
-Answer
+This keyword invokes a member of the base class
+super
 800
-Question
-Answer
+This keyword prevents exceptions from halting execution
+catch
 1000
-Question
-Answer
+This keyword halts execution
+break
 .
-Operating Systems
+Threading
 200
-Question
-Answer
+Calling this method creates a new thread
+start
 400
-Question
-Answer
+A custom thread class can be created by extending thread or implementing this
+Runnable
 600
-Question
-Answer
+The problem of managing threads' access to shared resources is known as this
+Concurrency
 800
-Question
-Answer
+Java simply handles multithreading with this keyword
+synchronized
 1000
-Question
-Answer
+This method takes a input of milliseconds and halts execution for the specified time
+sleep
 .
-Algorithms
+Whose Method Is It Anyway
 200
-Question
-Answer
+sin
+Math
 400
-Question
-Answer
+getComponents
+Container
 600
-Question
-Answer
+equals
+Object
 800
-Question
-Answer
+nextGaussian
+Random
 1000
-Question
-Answer
+valueOf
+String
 .
 ---
 Double Jeopardy
-Category1
+Professors
 400
-Question
-Answer
+This professor is easily recognizable by his long flowy beard and stern tone
+Sterling
 800
-Question
-Answer
+He's the final boss of undergraduate programming
+Strauss
 1200
-Question
-Answer
+CS majors shudder at the sheer amount of mathematics in her ML course
+Sellie
 1600
-Question
-Answer
+His iconic graphic tees made it easier to find the single-source shortest path
+Aronov
 2000
-Question
-Answer
+If this professor had a time machine he might visit a man named Guido
+Katz-Braunschweig
 .
-Category2
+Data Structures
 400
-Question
-Answer
+This is a contiguous block of memory
+Array
 800
-Question
-Answer
+This data structure is synonymous with first-in-first-out
+Queue
 1200
-Question
-Answer
+This chain usually has both a header and a footer
+Doubly-Linked List
 1600
-Question
-Answer
+This map is defined by an associated cryptographic function
+Hash Table
 2000
-Question
-Answer
-.
-Category3
-400
-Question
-Answer
-800
-Question
-Answer
-1200
-Question
-Answer
-1600
-Question
-Answer
-2000
-Question
-Answer
-.
-Java
-400
-Question
-Answer
-800
-Question
-Answer
-1200
-Question
-Answer
-1600
-Question
-Answer
-2000
-Question
-Answer
-.
-Category5
-400
-Question
-Answer
-800
-Question
-Answer
-1200
-Question
-Answer
-1600
-Question
-Answer
-2000
-Question
-Answer
+This data structure is defined by its vertices and edges
+Graph
 .
 Operating Systems
 400
-Question
-Answer
+This is most widely used assembly language
+x86
 800
-Question
-Answer
+Even after computers replaced books, pages could still be found here
+Virtual memory
 1200
-Question
-Answer
+A process is an instance of this
+A program
 1600
-Question
-Answer
+Programs interact with the operating system via this
+System calls
 2000
-Question
-Answer
+This algorithm assigns tickets to processes
+Lottery scheduling
+.
+Languages
+400
+This language is used for machine learning applications along with its sklearn packages
+Python
+800
+This language is used with JavaScript to build basic webpages
+HTML
+1200
+This language is widely used for taking notes and writing documentation
+Markdown
+1600
+This language calls Cupertino, CA home
+Swift
+2000
+This language is friendly to mathematicians due to its universal matrix representation
+MATLAB
+.
+Software Engineering
+400
+This standard protocol for design specifications recommends creating Class Diagrams and Use Case Diagrams
+Unified Modeling Language
+800
+This development protocol emphasizes individuality, functionality, communication, and flexibility
+Agile
+1200
+This method of assessment examines a system as if its internal workings are unknown
+Black-box testing
+1600
+These exist wherever a system relies on another system to function
+Dependencies
+2000
+This diagram serves as a visual timeline for scheduling and completing tasks
+Gantt chart
+.
+Machine Learning
+400
+This introductory estimation techinque is taught alongside Gaussian elimination
+Linear Regression
+800
+This model attempts to minimize a margin between a set of examples and a decision boundary
+Support vector machines
+1200
+This common activation function is represented by a greek letter
+Sigmoid
+1600
+These models are designed to accomodate time-sequenced data
+Recurrent neural networks
+2000
+This overfitting-prevention technique uses the L1 norm
+Lasso regularization
 .
 ---
 Final Jeopardy
-Category
-Question
-Answer
+Artificial Intelligence
+The January 2025 mobile launch of DeepSeek lost this company a fifth of its share price
+Nvidia

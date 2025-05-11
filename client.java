@@ -1,23 +1,18 @@
-import java.awt.BorderLayout;
+import java.awt.*;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
 import java.util.Scanner;
 import javax.swing.*;
 
-
-/**
- *
- * @author esw9386
- */
 public class client {
-    static String name, server, signal="";
+    static String name;
     static final String SERVER_PROMPT = "Enter a server name.";
     static final String SERVER_FAIL = "Connection failed; try again";
     static final String NAME_PROMPT = "Enter a team name.";
-    static final String CLOSED = "CLOSED";
+    static final String CLOSED = "LOCKED";
     static final String OPEN = "BUZZ IN";
-    static Socket s;
+    static final String BUZZ = "BUZZED";
     static Scanner sin;
     static PrintStream sout;
     static boolean over;
@@ -25,11 +20,12 @@ public class client {
     static JTextField jtf;
 
     public static void main(String[] args) {
+        // Initial GUI setup
         JFrame jf = new JFrame("This is JParty!");
-        jf.setSize(300,150);
+        jf.setSize(300, 150);
         jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         JPanel main = new JPanel(new BorderLayout());
-        jtf = new JTextField(); // choosing team name + final jeopardy
+        jtf = new JTextField(); // Server name, team name, final jeopardy answer
         buzzer = new Buzzer(SERVER_PROMPT);
         buzzer.addActionListener((e) -> {
             try {
@@ -41,88 +37,67 @@ public class client {
                         try {buzzer.setup();}
                         catch (IOException iox) {buzzer.setText(SERVER_FAIL);}
                     } else if (name==null) {
-                        buzzer.name=msg;
-                        buzzer.setText(CLOSED);
                         sout.println(msg);
+                        client.name = msg;
+                        buzzer.setText(CLOSED);
                     } else {sout.println(msg);}
+                } else if (buzzer.getText().equals(OPEN)) {
+                        sout.println("B");
+                        buzzer.setText("Buzz sent!");
                 }
             } catch (NullPointerException npx) {System.out.println("NullPointerException: "+npx.toString());}
         });
-
+        
         main.add(buzzer, BorderLayout.CENTER);
         main.add(jtf, BorderLayout.SOUTH);
         jf.add(main);
         jf.setVisible(true);
     }
 
-    static class Buzzer extends JButton implements Runnable { // thread
-        String text, name, server;
+    static class Buzzer extends JButton implements Runnable { 
+        String server;
         Socket s;
-        host.Game game; 
-        int id; // has to be first thing sent by host (0, 1, 2)
-        Buzzer(String text) {super(text); }//addActionListener(new BuzzerListener()); over=false;} 
-        // Buzzer(String text, Scanner sin) {this(text); this.sin=sin;} // probs won't be used
 
+        Buzzer(String text) { super(text); }
+        
         public void setup() throws IOException {
             if (sout==null) {
                 s = new Socket(server, 5190);
-                Scanner sin = new Scanner(s.getInputStream());
+                client.sin = new Scanner(s.getInputStream());
                 (new Thread(this)).start(); // begins to listen for messages from the server
-                sout = new PrintStream(s.getOutputStream());
-                sout.println(name); // announces username
+                client.sout = new PrintStream(s.getOutputStream(), true);
                 setText(NAME_PROMPT);
             }
         }
 
         @Override
         public void run() {
-            setText("Type the host server and tap this button to connect.");
-            while (!over) { // game has not yet ended
+            setText("Welcome to JParty");
+            while (!over) {
                 if (sin.hasNextLine()) {
-                    switch (sin.nextLine()) { 
-                        case signals.WAITING: // so if sin.nextLine() is equal to WAITING, which means when user input is "0"? 
+                    switch (sin.nextLine()) {
+                        case signals.WAITING:
                             setText("Waiting for teams to join...");
+                            break;
                         case signals.CLOSED: 
+                            setText(CLOSED);
+                            break;
                         case signals.OPEN: // clue has been read and clients are prompted to buzz
-                            setText("BUZZ IN");
-                        // case signals.NEXT: // stays open
-                        case signals.OVER: // switches to CLOSED signal too?
-                            over = true;
+                            setText(OPEN);
+                            break;
+                        case signals.BUZZ:
+                            setText(BUZZ);
+                            break;
+                    }
                     }
                 }
             }
-        }
 
-        // class BuzzerListener implements ActionListener {
-        //     // game window will display who presses the button first (change team name color) and if they are correct or incorrect when answering
-            
-        //     @Override
-        //     public void actionPerformed(ActionEvent e) {
-        //         if (!over) {
-        //             if (buzzer.text.equals(SERVER_PROMPT)) {
-        //                 server = jtf.getText();
-        //                 setup();
-        //             }
-        //             switch (signal) {
-        //                 case signals.CLOSED: // buzzer should do nothing
-        //                 case signals.OPEN: // if pressed first, buzzer should send msg to host that contestant has an answer; synchronized
-        //                     synchronized(game) {
-        //                         game.guess(id);
-        //                     }
-        //                 // case signals.NEXT: // 
-        //                 case signals.WAITING: // buzzer should do nothing
-        //                 case signals.OVER: // buzzer should do nothing
-        //             }
-        //         }
-        //     }
-        // }
-    }
-    
     public class signals {
-        static final String WAITING = "0"; // not every contestant has joined yet // Ready button for host 
-        static final String CLOSED = "1"; // buzzer is locked as a question has not yet been fully read // Lock buzzer button for host
-        static final String OPEN = "2"; // question has been read and anyone can buzz in // Open buzzer button for host
-    //    static final String NEXT = "3"; // moving onto next clue; host can just close the buzzers
-        static final String OVER = "4"; // when single jeopardy ends // End game button for host
+        static final String WAITING = "0"; // Not every contestant has joined yet
+        static final String CLOSED = "1"; // Buzzer is locked as a question has not yet been fully read
+        static final String OPEN = "2"; // Question has been read and anyone can buzz in
+        static final String BUZZ = "B";
+    }
     }
 }
